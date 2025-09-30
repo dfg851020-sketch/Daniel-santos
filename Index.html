@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Jogo das Bandeiras</title>
+<style>
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background: black;
+    color: white;
+    overflow-x: hidden;
+    padding-bottom: 40px;
+  }
+
+  h1 {
+    margin-top: 30px;
+    font-size: 2.8em;
+    text-shadow: 2px 2px 6px black;
+  }
+
+  p {
+    margin: 6px 0;
+  }
+
+  #descricao-jogo {
+    margin: 30px auto 50px auto;
+    max-width: 400px;
+    font-size: 1.15em;
+    line-height: 1.6em;
+    color: #ffd700;
+    text-shadow: 1px 1px 3px black;
+  }
+
+  #descricao-jogo p {
+    margin: 8px 0;
+  }
+
+  #startBtn {
+    margin-top: 30px;
+    padding: 16px 28px;
+    font-size: 1.4em;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+    z-index: 10;
+    position: relative;
+  }
+  #startBtn:hover {
+    background: #218838;
+    transform: scale(1.1);
+  }
+
+  #game {
+    margin: 40px auto;
+    display: none;
+    max-width: 400px;
+    background: rgba(255,255,255,0.1);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    backdrop-filter: blur(6px);
+    position: relative;
+    z-index: 10;
+  }
+
+  #flag {
+    width: 280px;
+    height: 160px;
+    margin: 25px auto;
+    border: 4px solid white;
+    box-shadow: 0 0 20px rgba(255,255,255,0.8);
+    border-radius: 12px;
+    animation: float 3s infinite ease-in-out;
+  }
+
+  .option {
+    display: block;
+    margin: 15px auto;
+    padding: 14px 20px;
+    background: linear-gradient(135deg, #ffcc00, #ff9900);
+    color: black;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.15em;
+    transition: transform 0.2s, background 0.3s;
+  }
+  .option:hover {
+    transform: scale(1.05);
+    background: linear-gradient(135deg, #ffaa00, #ff6600);
+  }
+
+  #score, #timer {
+    margin-top: 12px;
+    font-size: 1.25em;
+    text-shadow: 2px 2px 4px black;
+  }
+
+  #mensagem {
+    margin-top: 25px;
+    min-height: 30px;
+    font-size: 1.1em;
+  }
+
+  #toggleMusic {
+    margin-top: 25px;
+    padding: 12px 18px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: #007bff;
+    color: white;
+    transition: transform 0.2s, background 0.3s;
+  }
+  #toggleMusic:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  @keyframes piscar {
+    0% {opacity: 1;}
+    50% {opacity: 0;}
+    100% {opacity: 1;}
+  }
+
+  #bandeiras-fundo {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    z-index: -2;
+    background: black;
+  }
+  .bandeira {
+    position: absolute;
+    width: 80px;
+    height: 50px;
+    opacity: 0.4;
+    filter: blur(1px);
+    animation: mover linear infinite;
+  }
+  @keyframes mover {
+    0% { transform: translateY(100vh) rotate(0deg); }
+    100% { transform: translateY(-120vh) rotate(360deg); }
+  }
+
+  #linhas-glitch {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      rgba(255,255,255,0.05) 0 1px,
+      transparent 1px 3px
+    );
+    animation: linhas 0.2s infinite;
+  }
+  @keyframes linhas {
+    0% { background-position: 0 0; }
+    50% { background-position: 0 2px; }
+    100% { background-position: 0 0; }
+  }
+
+  #bandeiras-fundo::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(255,0,0,0.05),
+      rgba(0,255,255,0.05) 2px
+    );
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<h1>🌍 Descubra a Bandeira!</h1>
+<p>produzido por daniel santos</p>
+<p>@daniel.santos.7</p>
+
+<div id="descricao-jogo">
+  <p>🌍 Teste seus conhecimentos em geografia!</p>
+  <p>⏱️ Você tem 15 segundos por rodada e ganha pontos a cada acerto.</p>
+  <p>💬 Errar? Não se preocupe, ketyson só vai tirar 2 pontinhos seus.😎</p>
+</div>
+
+<button id="startBtn">▶️ Iniciar Jogo</button>
+
+<div id="game">
+  <img id="flag" src="" alt="Bandeira">
+  <div id="options"></div>
+  <p id="score">Pontuação: 0</p>
+  <p id="timer">Tempo: 15s</p>
+  <p id="mensagem"></p>
+  <button id="toggleMusic">⏯️ Pausar Música</button>
+</div>
+
+<div id="bandeiras-fundo"></div>
+<div id="linhas-glitch"></div>
+
+<audio id="musica" src="musica.mp3" loop></audio>
+<audio id="acerto" src="acerto.mp3"></audio>
+<audio id="erro" src="erro.mp3"></audio>
+
+<script>
+const flags = [
+  {name:"Afeganistão", code:"af"},
+  {name:"África do Sul", code:"za"},
+  {name:"Albânia", code:"al"},
+  {name:"Alemanha", code:"de"},
+  {name:"Andorra", code:"ad"},
+  {name:"Angola", code:"ao"},
+  {name:"Arábia Saudita", code:"sa"},
+  {name:"Argélia", code:"dz"},
+  {name:"Argentina", code:"ar"},
+  {name:"Armênia", code:"am"},
+  {name:"Austrália", code:"au"},
+  {name:"Áustria", code:"at"},
+  {name:"Bahamas", code:"bs"},
+  {name:"Bangladesh", code:"bd"},
+  {name:"Barbados", code:"bb"},
+  {name:"Bélgica", code:"be"},
+  {name:"Bolívia", code:"bo"},
+  {name:"Brasil", code:"br"},
+  {name:"Bulgária", code:"bg"},
+  {name:"Cabo Verde", code:"cv"},
+  {name:"Camarões", code:"cm"},
+  {name:"Canadá", code:"ca"},
+  {name:"Chile", code:"cl"},
+  {name:"China", code:"cn"},
+  {name:"Colômbia", code:"co"},
+  {name:"Coreia do Norte", code:"kp"},
+  {name:"Coreia do Sul", code:"kr"},
+  {name:"Costa Rica", code:"cr"},
+  {name:"Croácia", code:"hr"},
+  {name:"Cuba", code:"cu"},
+  {name:"Dinamarca", code:"dk"},
+  {name:"Egito", code:"eg"},
+  {name:"Emirados Árabes Unidos", code:"ae"},
+  {name:"Equador", code:"ec"},
+  {name:"Espanha", code:"es"},
+  {name:"Estados Unidos", code:"us"},
+  {name:"Estônia", code:"ee"},
+  {name:"Etiópia", code:"et"},
+  {name:"Filipinas", code:"ph"},
+  {name:"Finlândia", code:"fi"},
+  {name:"França", code:"fr"},
+  {name:"Grécia", code:"gr"},
+  {name:"Holanda", code:"nl"},
+  {name:"Hungria", code:"hu"},
+  {name:"Índia", code:"in"},
+  {name:"Indonésia", code:"id"},
+  {name:"Irã", code:"ir"},
+  {name:"Iraque", code:"iq"},
+  {name:"Irlanda", code:"ie"},
+  {name:"Islândia", code:"is"},
+  {name:"Israel", code:"il"},
+  {name:"Itália", code:"it"},
+  {name:"Jamaica", code:"jm"},
+  {name:"Japão", code:"jp"},
+  {name:"Jordânia", code:"jo"},
+  {name:"Letônia", code:"lv"},
+  {name:"Líbano", code:"lb"},
+  {name:"Lituânia", code:"lt"},
+  {name:"Luxemburgo", code:"lu"},
+  {name:"Madagascar", code:"mg"},
+  {name:"Malásia", code:"my"},
+  {name:"Marrocos", code:"ma"},
+  {name:"México", code:"mx"},
+  {name:"Moçambique", code:"mz"},
+  {name:"Nigéria", code:"ng"},
+  {name:"Noruega", code:"no"},
+  {name:"Nova Zelândia", code:"nz"},
+  {name:"Panamá", code:"pa"},
+  {name:"Paraguai", code:"py"},
+  {name:"Peru", code:"pe"},
+  {name:"Polônia", code:"pl"},
+  {name:"Portugal", code:"pt"},
+  {name:"Quênia", code:"ke"},
+  {name:"Reino Unido", code:"gb"},
+  {name:"República Tcheca", code:"cz"},
+  {name:"Romênia", code:"ro"},
+  {name:"Rússia", code:"ru"},
+  {name:"Senegal", code:"sn"},
+  {name:"Sérvia", code:"rs"},
+  {name:"Síria", code:"sy"},
+  {name:"Suécia", code:"se"},
+  {name:"Suíça", code:"ch"},
+  {name:"Tailândia", code:"th"},
+  {name:"Turquia", code:"tr"},
+  {name:"Ucrânia", code:"ua"},
+  {name:"Uruguai", code:"uy"},
+  {name:"Venezuela", code:"ve"},
+  {name:"Vietnã", code:"vn"},
+  {name:"Zâmbia", code:"zm"},
+  {name:"Zimbábue", code:"zw"}
+];
+
+const frasesErro = [
+  "Tá estudando geografia pelo Google Maps, né? 🌍",
+  "Nem o GPS se perderia tão feio assim... 🧭",
+  "Se fosse prova de capital, já tinha rodado. 🏛️",
+  "Isso aí não passa nem na primeira fase do Show do Milhão. 💸",
+  "Parabéns! Você desbloqueou o continente imaginário. 🗺️",
+  "Essa bandeira nem o Waze confunde, mas você conseguiu. 🚗",
+  "Até a bússola ficou com vergonha agora. 🧭",
+  "Tá jogando bandeiras ou bingo? 🎰",
+  "Se errar fosse esporte, você tava nas Olimpíadas. 🏅",
+  "Geografia mandou lembranças (e não foram boas). 📚"
+];
+
+let score = 0, timeLeft = 15, timer;
+const flagImg = document.getElementById("flag");
+const optionsDiv = document.getElementById("options");
+const scoreP = document.getElementById("score");
+const timerP = document.getElementById("timer");
+const musica = document.getElementById("musica");
+const acerto = document.getElementById("acerto");
+const erro = document.getElementById("erro");
+const startBtn = document.getElementById("startBtn");
+const gameDiv = document.getElementById("game");
+const msg = document.getElementById("mensagem");
+
+startBtn.onclick = () => {
+  startBtn.style.display = "none";
+  gameDiv.style.display = "block";
+  musica.play();
+  nextRound();
+};
+
+document.getElementById("toggleMusic").onclick = () => {
+  if(musica.paused) musica.play(); else musica.pause();
+};
+
+function nextRound() {
+  clearInterval(timer);
+  timeLeft = 15;
+  timerP.textContent = "Tempo: " + timeLeft + "s";
+  timer = setInterval(() => {
+    timeLeft--;
+    timerP.textContent = "Tempo: " + timeLeft + "s";
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      mostrarErro("⏰ Tempo esgotado!");
+      nextRound();
+    }
+  },1000);
+
+  const correct = flags[Math.floor(Math.random()*flags.length)];
+  flagImg.src = "flags/" + correct.code + ".png";
+
+  let opts = [correct];
+  while(opts.length < 4){
+    let r = flags[Math.floor(Math.random()*flags.length)];
+    if(!opts.includes(r)) opts.push(r);
+  }
+  opts.sort(() => Math.random()-0.5);
+
+  optionsDiv.innerHTML = "";
+  opts.forEach(opt=>{
+    let btn = document.createElement("button");
+    btn.textContent = opt.name;
+    btn.className = "option";
+    btn.onclick = ()=>{
+      if(opt === correct){
+        score++;
+        scoreP.textContent = "Pontuação: " + score;
+        acerto.play();
+        msg.textContent = "";
+      } else {
+        erro.play();
+        const frase = frasesErro[Math.floor(Math.random() * frasesErro.length)];
+        mostrarErro(frase);
+      }
+      nextRound();
+    };
+    optionsDiv.appendChild(btn);
+  });
+}
+
+function mostrarErro(texto) {
+  msg.textContent = texto;
+  msg.style.color = "red";
+  msg.style.fontSize = "1.2em";
+  msg.style.fontWeight = "bold";
+  msg.style.animation = "piscar 0.5s infinite";
+  setTimeout(() => {
+    msg.textContent = "";
+    msg.style.animation = "";
+  }, 3000);
+}
+
+// Fundo bandeiras animadas
+const fundo = document.getElementById("bandeiras-fundo");
+const bandeirasImgs = [
+  "flags/br.png","flags/us.png","flags/jp.png","flags/de.png",
+  "flags/fr.png","flags/ar.png","flags/it.png","flags/mx.png",
+  "flags/es.png","flags/gb.png"
+];
+
+function criarBandeira() {
+  const img = document.createElement("img");
+  img.src = bandeirasImgs[Math.floor(Math.random()*bandeirasImgs.length)];
+  img.className = "bandeira";
+  img.style.left = Math.random()*100 + "vw";
+  img.style.animationDuration = (6 + Math.random()*8) + "s";
+  img.style.width = (60 + Math.random()*60) + "px";
+  fundo.appendChild(img);
+  setTimeout(() => img.remove(), 15000);
+}
+setInterval(criarBandeira, 700);
+</script>
+</body>
+</html>
